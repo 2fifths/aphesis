@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
   <meta name="color-scheme" content="light dark">
   <meta name="referrer" content="no-referrer">
   <meta name="robots" content="noindex, nofollow, noarchive">
@@ -366,7 +366,16 @@
     .status:empty { display: none; }
 
     @media (max-width: 520px) {
-      body { padding: 24px 16px 0; }
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+      }
+      body {
+        min-height: 0;
+        height: 100dvh;
+        padding: 0 16px;
+      }
       .paper {
         width: min(90vw, max(160px, calc(100dvh - 185px)));
         min-height: 0;
