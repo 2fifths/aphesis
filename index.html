@@ -1,0 +1,743 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; font-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'; form-action 'none'; base-uri 'none'">
+  <title>Send Into the Void</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --font: Palatino, "Palatino Linotype", "Book Antiqua", serif;
+      --page: #f6f0e7;
+      --ink: #2f2925;
+      --muted: #746b64;
+      --placeholder: #c9c0b7;
+      --paper: rgba(255, 252, 247, 0.9);
+      --line: rgba(68, 55, 45, 0.18);
+      --button: #54443c;
+      --button-ink: #fffaf4;
+      --focus: #9a6955;
+      --moon: #77655a;
+      --moon-active: #d69f45;
+      --shadow: 0 24px 70px rgba(68, 45, 31, 0.12);
+    }
+
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --page: #060914;
+      --ink: #ffffff;
+      --muted: #c7ccda;
+      --placeholder: #566070;
+      --paper: rgba(12, 18, 34, 0.94);
+      --line: rgba(255, 255, 255, 0.16);
+      --button: #eef1f8;
+      --button-ink: #090d1a;
+      --focus: #91a9df;
+      --moon: #f2c66f;
+      --moon-active: #f2c66f;
+      --shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      font-family: var(--font);
+    }
+
+    html, body { min-height: 100%; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      overflow-x: hidden;
+      color: var(--ink);
+      background: var(--page);
+      font-family: var(--font);
+      transition: color 260ms ease, background-color 260ms ease;
+    }
+
+    main {
+      width: min(100%, 680px);
+      opacity: 1;
+      visibility: visible;
+      text-align: center;
+    }
+
+    body.is-releasing main {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: none;
+    }
+
+    body.is-returning main {
+      opacity: 0;
+      visibility: visible;
+      pointer-events: none;
+      transition: none;
+    }
+
+    body.is-returning.is-returning-visible main {
+      opacity: 1;
+      transition: opacity 2s ease;
+    }
+
+    .prompt {
+      max-width: 520px;
+      margin: 0 auto 30px;
+      color: var(--muted);
+      font-family: var(--font);
+      font-size: 0.98rem;
+      line-height: 1.6;
+    }
+
+    .theme-toggle {
+      display: grid;
+      flex: 0 0 auto;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      place-items: center;
+      color: var(--moon);
+      background: transparent;
+      border: 0;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: color 220ms ease, transform 220ms ease;
+    }
+
+    .theme-toggle:hover {
+      color: var(--moon-active);
+      transform: translateY(-1px);
+    }
+
+    .theme-toggle:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    .theme-toggle span {
+      display: block;
+      font: 400 1.1rem/1 var(--font);
+    }
+
+    .paper {
+      position: relative;
+      width: min(100%, 90vw);
+      min-height: 360px;
+      margin-inline: auto;
+      padding: clamp(20px, 5vw, 34px);
+      overflow: hidden;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      transition: background-color 260ms ease, border-color 260ms ease, box-shadow 260ms ease;
+    }
+
+    label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .message-area {
+      position: relative;
+    }
+
+    textarea {
+      display: block;
+      width: 100%;
+      height: 260px;
+      min-height: 260px;
+      resize: vertical;
+      padding-right: 16px;
+      padding-left: 16px;
+      overflow-y: auto;
+      color: var(--ink);
+      background: transparent;
+      border: 0;
+      outline: 0;
+      text-align: center;
+      font: 1.24rem/1.65 var(--font);
+    }
+
+    textarea::placeholder {
+      color: var(--placeholder);
+      opacity: 1;
+      font-family: var(--font);
+      font-style: normal;
+      font-weight: 300;
+    }
+
+    .message-measure {
+      position: absolute;
+      top: 0;
+      left: -100000px;
+      visibility: hidden;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      text-align: center;
+      font: 1.24rem/1.65 var(--font);
+    }
+
+    .actions {
+      display: flex;
+      justify-content: center;
+      margin-top: 22px;
+    }
+
+    .release-button {
+      position: relative;
+      min-height: 44px;
+      padding: 10px 32px;
+      color: var(--placeholder);
+      background: transparent;
+      border: 0;
+      font: italic 300 1rem/1 var(--font);
+      letter-spacing: 0.025em;
+      cursor: pointer;
+      transition: transform 160ms ease, opacity 160ms ease, color 260ms ease;
+    }
+
+    .release-button::before,
+    .release-button::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 50%;
+      pointer-events: none;
+      transition: clip-path 380ms cubic-bezier(.4, 0, .2, 1);
+    }
+
+    .release-button::before {
+      left: 0;
+      border: 1px solid currentColor;
+      border-right: 0;
+      clip-path: inset(0 calc(100% - 13px) 0 0);
+    }
+
+    .release-button::after {
+      right: 0;
+      border: 1px solid currentColor;
+      border-left: 0;
+      clip-path: inset(0 0 0 calc(100% - 13px));
+    }
+
+    .release-button:hover,
+    .release-button:focus-visible {
+      color: var(--ink);
+    }
+
+    .release-button:hover::before,
+    .release-button:hover::after,
+    .release-button:focus-visible::before,
+    .release-button:focus-visible::after {
+      clip-path: inset(0);
+    }
+
+    .release-button:active { transform: scale(0.98); }
+    .release-button:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+    .release-button:disabled { cursor: default; opacity: 0.62; transform: none; }
+
+    .release-stage {
+      position: fixed;
+      z-index: 10;
+      inset: 0;
+      display: grid;
+      visibility: hidden;
+      padding: clamp(24px, 6vw, 64px);
+      place-items: center;
+      pointer-events: none;
+    }
+
+    .release-stage.is-active {
+      visibility: visible;
+    }
+
+    .released-message {
+      position: relative;
+      width: min(100%, 680px);
+      height: min(70vh, 520px);
+      overflow: hidden;
+      opacity: 1;
+      filter: none;
+      transform: none;
+      color: var(--ink);
+      font-size: clamp(1.45rem, 5vw, 2.2rem);
+      font-family: var(--font);
+      font-weight: 300;
+      line-height: 1.45;
+      pointer-events: none;
+    }
+
+    .released-message.has-bottom-fade {
+      -webkit-mask-image: linear-gradient(
+        to bottom,
+        black 0,
+        black 82%,
+        transparent 100%
+      );
+      mask-image: linear-gradient(
+        to bottom,
+        black 0,
+        black 82%,
+        transparent 100%
+      );
+    }
+
+    .released-message.is-fading {
+      opacity: 0;
+      filter: blur(7px);
+      transform: translateY(-24px) scale(0.985);
+      transition:
+        opacity 5s linear,
+        filter 5s ease,
+        transform 5s ease;
+    }
+
+    .released-text {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      text-align: center;
+      font-weight: 300;
+      transform: translate3d(0, 0, 0);
+      will-change: transform;
+    }
+
+    .release-line {
+      display: block;
+      white-space: pre;
+      opacity: 1;
+      filter: none;
+      transform: translateY(0) scale(1);
+      transform-origin: center;
+    }
+
+    .release-line.is-fading {
+      opacity: 0;
+      filter: blur(7px);
+      transform: translateY(-24px) scale(0.985);
+      transition:
+        opacity 5s linear,
+        filter 5s ease,
+        transform 5s ease;
+    }
+
+    .privacy-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      margin: 18px auto 0;
+    }
+
+    .privacy {
+      margin: 0;
+      color: var(--muted);
+      font: 0.82rem/1.5 var(--font);
+      font-style: italic;
+    }
+
+    .status {
+      margin: 22px 0 0;
+      color: var(--muted);
+      font: 0.95rem/1.6 var(--font);
+    }
+
+    .status:empty { display: none; }
+
+    @media (max-width: 520px) {
+      body { padding: 24px 16px; }
+      .paper {
+        min-height: 0;
+        aspect-ratio: 1 / 1;
+      }
+      .editor {
+        display: flex;
+        height: 100%;
+        flex-direction: column;
+      }
+      .message-area {
+        flex: 1 1 auto;
+        min-height: 0;
+      }
+      textarea {
+        height: 100%;
+        min-height: 0;
+        resize: none;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main id="page-content">
+    <p class="prompt">Write what you wish you could say. When you are ready, release it.<br>It will not be sent, saved, or answered.</p>
+
+    <section class="paper" id="paper" aria-label="Message">
+      <div class="editor" id="editor">
+        <label for="message">What do you wish you could say?</label>
+        <div class="message-area">
+          <textarea
+            id="message"
+            placeholder="I wanted to tell you..."
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="sentences"
+            enterkeyhint="done"
+            spellcheck="false"
+            data-gramm="false"
+            data-gramm_editor="false"
+            data-enable-grammarly="false"
+            autofocus
+          ></textarea>
+          <div class="message-measure" id="message-measure" aria-hidden="true"></div>
+        </div>
+        <div class="actions">
+          <button class="release-button" id="release" type="button">release</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="privacy-row">
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Use dark mode" aria-pressed="false">
+        <span aria-hidden="true">☾</span>
+      </button>
+      <p class="privacy">Nothing you type is transmitted or saved by this page. Spellcheck and autocomplete are off.</p>
+    </div>
+    <p class="status" id="status" aria-live="polite"></p>
+  </main>
+
+  <div class="release-stage" id="release-stage" aria-hidden="true">
+    <div class="released-message" id="released-message">
+      <div class="released-text" id="released-text"></div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const root = document.documentElement;
+      const body = document.body;
+      const pageContent = document.getElementById('page-content');
+      const message = document.getElementById('message');
+      const measure = document.getElementById('message-measure');
+      const release = document.getElementById('release');
+      const releaseStage = document.getElementById('release-stage');
+      const releasedMessage = document.getElementById('released-message');
+      const releasedText = document.getElementById('released-text');
+      const status = document.getElementById('status');
+      const themeToggle = document.getElementById('theme-toggle');
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+      const minimumScrollDuration = 5000;
+      const maximumScrollDuration = 38000;
+      const scrollMillisecondsPerPixel = 28;
+      const shortMessageHoldDuration = 2000;
+      const longMessageLeadInDuration = 1000;
+      const longMessageHoldDuration = 1000;
+      const messageFadeDuration = 5000;
+      const emptyPauseDuration = 1000;
+      const interfaceReturnDuration = 2000;
+
+      let leadInTimer;
+      let holdTimer;
+      let fadeTimer;
+      let emptyTimer;
+      let returnTimer;
+      let scrollFrame;
+      let returnFrame;
+
+      const useDarkTheme = (isDark) => {
+        root.dataset.theme = isDark ? 'dark' : 'light';
+        themeToggle.setAttribute('aria-pressed', String(isDark));
+        themeToggle.setAttribute('aria-label', isDark ? 'Use light mode' : 'Use dark mode');
+      };
+
+      useDarkTheme(window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+      themeToggle.addEventListener('click', () => {
+        useDarkTheme(root.dataset.theme !== 'dark');
+      });
+
+      const centerTypedText = () => {
+        const horizontalPadding = 32;
+        measure.style.width = `${Math.max(1, message.clientWidth - horizontalPadding)}px`;
+        measure.textContent = message.value || ' ';
+
+        const contentHeight = measure.getBoundingClientRect().height;
+        const verticalPadding = Math.max(16, (message.clientHeight - contentHeight) / 2);
+        message.style.paddingTop = `${verticalPadding}px`;
+        message.style.paddingBottom = `${verticalPadding}px`;
+      };
+
+      const resetRelease = ({ focus = true } = {}) => {
+        window.clearTimeout(leadInTimer);
+        window.clearTimeout(holdTimer);
+        window.clearTimeout(fadeTimer);
+        window.clearTimeout(emptyTimer);
+        window.clearTimeout(returnTimer);
+        window.cancelAnimationFrame(scrollFrame);
+        window.cancelAnimationFrame(returnFrame);
+        body.classList.remove('is-releasing', 'is-returning', 'is-returning-visible');
+        releaseStage.classList.remove('is-active');
+        releaseStage.setAttribute('aria-hidden', 'true');
+        pageContent.removeAttribute('aria-hidden');
+        pageContent.inert = false;
+        releasedMessage.classList.remove('is-fading', 'has-bottom-fade');
+        releasedText.textContent = '';
+        releasedText.style.transform = '';
+        message.disabled = false;
+        release.disabled = false;
+        centerTypedText();
+        if (focus) message.focus();
+      };
+
+      const clearPrivateText = () => {
+        message.value = '';
+        releasedText.textContent = '';
+      };
+
+      const finishRelease = () => {
+        releaseStage.classList.remove('is-active');
+        releasedMessage.classList.remove('is-fading', 'has-bottom-fade');
+        releasedText.textContent = '';
+        releasedText.style.transform = '';
+
+        emptyTimer = window.setTimeout(() => {
+          body.classList.add('is-returning');
+          body.classList.remove('is-releasing');
+
+          returnFrame = window.requestAnimationFrame(() => {
+            body.classList.add('is-returning-visible');
+
+            returnTimer = window.setTimeout(() => {
+              resetRelease();
+            }, interfaceReturnDuration);
+          });
+        }, emptyPauseDuration);
+      };
+
+      const fadeReleasedText = () => {
+        releasedMessage.classList.add('is-fading');
+
+        fadeTimer = window.setTimeout(() => {
+          finishRelease();
+        }, reduceMotion.matches ? 50 : messageFadeDuration);
+      };
+
+      const holdThenFade = (duration = shortMessageHoldDuration) => {
+        holdTimer = window.setTimeout(() => {
+          fadeReleasedText();
+        }, duration);
+      };
+
+      const splitReleasedTextIntoLines = () => {
+        const textNode = releasedText.firstChild;
+        if (!textNode || textNode.nodeType !== Node.TEXT_NODE) return [];
+
+        const source = textNode.data;
+        const range = document.createRange();
+        const lines = [];
+        let line = '';
+        let lineTop = null;
+        let offset = 0;
+
+        const finishLine = (includeEmpty = false) => {
+          if (line || includeEmpty) lines.push(line);
+          line = '';
+          lineTop = null;
+        };
+
+        for (const character of source) {
+          const characterLength = character.length;
+
+          if (character === '\r') {
+            offset += characterLength;
+            continue;
+          }
+
+          if (character === '\n') {
+            finishLine(true);
+            offset += characterLength;
+            continue;
+          }
+
+          range.setStart(textNode, offset);
+          range.setEnd(textNode, offset + characterLength);
+          const rect = range.getBoundingClientRect();
+
+          if (rect.height > 0) {
+            if (lineTop !== null && Math.abs(rect.top - lineTop) > 1) {
+              finishLine();
+            }
+            if (lineTop === null) lineTop = rect.top;
+          }
+
+          line += character;
+          offset += characterLength;
+        }
+
+        if (line || source.endsWith('\n')) finishLine(true);
+        range.detach();
+
+        const lineElements = lines.map((lineText) => {
+          const element = document.createElement('span');
+          element.className = 'release-line';
+          element.textContent = lineText || '\u00a0';
+          return element;
+        });
+
+        releasedText.replaceChildren(...lineElements);
+        return lineElements;
+      };
+
+      const releaseDisplayedText = () => {
+        const viewportHeight = releasedMessage.clientHeight;
+        let contentHeight = releasedText.scrollHeight;
+        const isOverflowing = contentHeight > viewportHeight + 1;
+
+        if (!isOverflowing) {
+          const centeredOffset = Math.max(0, (viewportHeight - contentHeight) / 2);
+          releasedText.style.transform = `translate3d(0, ${centeredOffset}px, 0)`;
+          releaseStage.classList.add('is-active');
+          holdThenFade();
+          return;
+        }
+
+        releasedMessage.classList.add('has-bottom-fade');
+        const lineElements = splitReleasedTextIntoLines();
+        contentHeight = releasedText.scrollHeight;
+
+        const startingOffset = viewportHeight / 3;
+        const endingOffset = viewportHeight * 2 / 3 - contentHeight;
+        const travelDistance = startingOffset - endingOffset;
+        const scrollDuration = Math.min(
+          maximumScrollDuration,
+          Math.max(minimumScrollDuration, travelDistance * scrollMillisecondsPerPixel)
+        );
+
+        releasedText.style.transform = `translate3d(0, ${startingOffset}px, 0)`;
+        releaseStage.classList.add('is-active');
+
+        const lineOffsets = lineElements.map((lineElement) => lineElement.offsetTop);
+        let nextLineToFade = 0;
+
+        const fadeLinesAtOffset = (currentOffset) => {
+          while (
+            nextLineToFade < lineElements.length &&
+            currentOffset + lineOffsets[nextLineToFade] <= startingOffset
+          ) {
+            lineElements[nextLineToFade].classList.add('is-fading');
+            nextLineToFade += 1;
+          }
+        };
+
+        const beginLongMessageRelease = () => {
+          releasedText.getBoundingClientRect();
+          fadeLinesAtOffset(startingOffset);
+
+          if (reduceMotion.matches) {
+            releasedText.style.transform = `translate3d(0, ${endingOffset}px, 0)`;
+            holdThenFade(longMessageHoldDuration);
+            return;
+          }
+
+          scrollFrame = window.requestAnimationFrame((animationStartTime) => {
+            const scrollStep = (currentTime) => {
+              const progress = Math.min(
+                1,
+                (currentTime - animationStartTime) / scrollDuration
+              );
+              const offset = startingOffset - travelDistance * progress;
+              releasedText.style.transform = `translate3d(0, ${offset}px, 0)`;
+              fadeLinesAtOffset(offset);
+
+              if (progress < 1) {
+                scrollFrame = window.requestAnimationFrame(scrollStep);
+                return;
+              }
+
+              releasedText.style.transform = `translate3d(0, ${endingOffset}px, 0)`;
+              holdThenFade(longMessageHoldDuration);
+            };
+
+            scrollFrame = window.requestAnimationFrame(scrollStep);
+          });
+        };
+
+        leadInTimer = window.setTimeout(
+          beginLongMessageRelease,
+          longMessageLeadInDuration
+        );
+      };
+
+      message.addEventListener('input', centerTypedText);
+      message.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
+          event.preventDefault();
+          release.click();
+        }
+      });
+      new ResizeObserver(centerTypedText).observe(message);
+      centerTypedText();
+
+      release.addEventListener('click', () => {
+        const text = message.value.trim();
+
+        if (!text) {
+          status.textContent = 'There is nothing to release yet.';
+          message.focus();
+          return;
+        }
+
+        release.disabled = true;
+        message.disabled = true;
+        status.textContent = '';
+
+        releasedText.textContent = text;
+        message.value = '';
+        pageContent.inert = true;
+        pageContent.setAttribute('aria-hidden', 'true');
+        releaseStage.setAttribute('aria-hidden', 'false');
+        body.classList.add('is-releasing');
+        releaseDisplayedText();
+      });
+
+      window.addEventListener('pagehide', clearPrivateText);
+      window.addEventListener('pageshow', (event) => {
+        if (event.persisted) {
+          clearPrivateText();
+          resetRelease({ focus: false });
+          status.textContent = '';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
